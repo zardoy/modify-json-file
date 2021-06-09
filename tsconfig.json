@@ -1,0 +1,8 @@
+{
+    "extends": "@zardoy/tsconfig/node",
+    "compilerOptions": {
+        "module": "CommonJS",
+        "esModuleInterop": true,
+        "declaration": true
+    }
+}
