@@ -1,6 +1,6 @@
 {
   "name": "modify-json-file",
-  "version": "0.0.1",
+  "version": "0.0.0-development",
   "main": "build/index.js",
   "types": "build/index.d.ts",
   "description": "Simple and modern way to modify JSON files",
