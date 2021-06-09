@@ -18,9 +18,9 @@
   ],
   "author": "Vitaly <vital2580@icloud.com>",
   "license": "MIT",
-  "files": {
+  "files": [
       "build"
-  },
+  ],
   "scripts": {
     "prepublishOnly": "tsc",
     "test": "echo they're definitely needed"
