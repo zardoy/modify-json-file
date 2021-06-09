@@ -18,8 +18,11 @@
   ],
   "author": "Vitaly <vital2580@icloud.com>",
   "license": "MIT",
+  "files": {
+      "build"
+  },
   "scripts": {
-    "prepublishOnly": "yarn tsc",
+    "prepublishOnly": "tsc",
     "test": "echo they're definitely needed"
   },
   "devDependencies": {
