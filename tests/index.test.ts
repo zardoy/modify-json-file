@@ -4,7 +4,7 @@ import jsonfile from "jsonfile";
 import path from "path";
 import del from "del";
 import nanoid from "nanoid";
-import { modifyJsonFile } from "../src/index"
+import { modifyJsonFile, modifyPackageJsonFile } from "../build/"
 import fs from "fs/promises";
 
 const jsonFilePath = path.join(__dirname, "testing-file.json");
@@ -32,6 +32,14 @@ test("modifies JSON file", async t => {
         dependencies: {
             "type-fest": "^1.0.0"
         }
+    })
+    const modifiedJsonFle = await fs.readFile(jsonFilePath, "utf8");
+    t.snapshot(modifiedJsonFle);
+})
+
+test("modifies package.json file with async function", async t => {
+    await modifyPackageJsonFile(jsonFilePath, async ({ main }) => {
+        return { types: main, name: "ahaha" };
     })
     const modifiedJsonFle = await fs.readFile(jsonFilePath, "utf8");
     t.snapshot(modifiedJsonFle);

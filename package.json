@@ -22,7 +22,7 @@
     "build"
   ],
   "scripts": {
-    "prepublishOnly": "yarn test && tsc",
+    "prepublishOnly": "tsc && yarn test",
     "test": "ava --serial"
   },
   "devDependencies": {
@@ -44,7 +44,7 @@
     "detect-indent": "^6.1.0",
     "graceful-fs": "^4.2.6",
     "parse-json": "^5.2.0",
-    "strip-bom": "^5.0.0",
+    "strip-bom": "4",
     "type-fest": "^1.2.0"
   },
   "ava": {

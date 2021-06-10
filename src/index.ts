@@ -4,6 +4,8 @@ import stripBom from "strip-bom"
 import parseJson from "parse-json"
 import fs from "graceful-fs"
 
+type MaybePromise<T> = T | Promise<T>;
+
 interface Options {
     /** @default utf-8 */
     encoding: BufferEncoding
@@ -38,13 +40,13 @@ type GettersDeep<T extends object> = {
 
 export type ModifyJsonFileFunction<T extends object> = (
     path: string,
-    modifyFields: Partial<T | GettersDeep<T>> | ((oldJson: T) => T), 
+    modifyFields: Partial<T | GettersDeep<T>> | ((oldJson: T) => MaybePromise<T>), 
     options?: Options
 ) => Promise<void>;
 
 type ModifyJsonFileGenericFunction = <T extends object>(
     path: string,
-    modifyFields: Partial<T | GettersDeep<T>> | ((oldJson: T) => T), 
+    modifyFields: Partial<T | GettersDeep<T>> | ((oldJson: T) => MaybePromise<T>), 
     options?: Partial<Options>
 ) => Promise<void>;
 
@@ -90,7 +92,7 @@ export const modifyJsonFile: ModifyJsonFileGenericFunction = async (
         // todo remove restriction or not?
         if (!json || typeof json !== "object" || Array.isArray(json)) throw new TypeError(`${path}: JSON root type must be object`);
         if (typeof modifyFields === "function") {
-            json = modifyFields(json)
+            json = await modifyFields(json)
         } else {
             for (const [name, value] of Object.entries(modifyFields)) {
                 if (!(name in json)) {
