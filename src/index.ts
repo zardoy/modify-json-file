@@ -73,7 +73,7 @@ const loadJsonFile = async (filePath: string, { encoding, tabSize }: Pick<Option
  * modifies **original** JSON file
  * You can pass generic, that reflects the structure of original JSON file
  * 
- * @param modifyFields Function setter or fields to merge
+ * @param modifyFields Fields to merge or callback (can be async). If callback is passed, JSON fields won't be merged.
  */
 export const modifyJsonFile: ModifyJsonFileGenericFunction = async (
     path,
