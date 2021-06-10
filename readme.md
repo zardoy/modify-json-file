@@ -2,7 +2,7 @@
 
 Simplest way to modify JSON files
 
-[API](https://paka.dev/npm/@zardoy/modify-json-file)
+[API](https://paka.dev/npm/modify-json-file)
 
 ## Why?
 
