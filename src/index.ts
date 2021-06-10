@@ -1,21 +1,22 @@
-import fs from "fs";
 import { PackageJson, TsConfigJson } from "type-fest";
 import detectIndent from "detect-indent"
-import loadJsonFile from "load-json-file"
+import stripBom from "strip-bom"
+import parseJson from "parse-json"
+import fs from "graceful-fs"
 
 interface Options {
     /** @default utf-8 */
     encoding: BufferEncoding
     /** 
-     * Will throw in case of FS error or invalid JSON
+     * If `false`, FS or JSON errors will be ignored
      * @default true
      *  */
     throws: boolean
     // ideally this lib should integrate with json validator
-    /** @default "throw" (even if throws is false) */
+    /** @default "throw" (silent if throws: false) */
     ifFieldIsMissing: "throw" | "skip" | "add"
     /** 
-     * - throw - throws (even if throws param is false) 
+     * - throw - throws (silent if throws: false) 
      *-  skip - won't call the function
      * - pass - pass the `undefined` value
      * @default "throw" 
@@ -31,36 +32,50 @@ interface Options {
 }
 
 type GettersDeep<T extends object> = {
-    [K in keyof T]: (oldValue: T[K], json: T) => unknown
+    [K in keyof T]: (oldValue: T[K], json: T) => T[K]
     //T[K] extends object ? ((oldValue: T[K]) => unknown)/*  | GettersDeep<T[K]> */ : (oldValue: T[K]) => unknown
 }
 
 export type ModifyJsonFileFunction<T extends object> = (
     path: string,
-    fields: Partial<T | GettersDeep<T>>, 
+    modifyFields: Partial<T | GettersDeep<T>> | ((oldJson: T) => T), 
     options?: Options
 ) => Promise<void>;
 
 type ModifyJsonFileGenericFunction = <T extends object>(
     path: string,
-    fields: Partial<T | GettersDeep<T>>, 
+    modifyFields: Partial<T | GettersDeep<T>> | ((oldJson: T) => T), 
     options?: Partial<Options>
 ) => Promise<void>;
 
+/** returns additional info, not only JSON */
+const loadJsonFile = async (filePath: string, { encoding, tabSize }: Pick<Options, "encoding" | "tabSize">) => {
+    const contents = stripBom(
+        await fs.promises.readFile(filePath, encoding)
+    );
+    return {
+        json: parseJson(contents, filePath),
+        indent: tabSize === "preserve" ? 
+            detectIndent(contents).indent : 
+                tabSize === "hard" ? "\t" : tabSize === null ? 
+                    undefined : " ".repeat(tabSize)
+    }
+};
+
 /** It's just Error */
-class InnerError extends Error {
-    innerError = true;
-}
+// class InnerError extends Error {
+//     innerError = true;
+// }
 
 /**
  * modifies **original** JSON file
  * You can pass generic, that reflects the structure of original JSON file
  * 
- * Fields, that are functions will be skipped if they're not preset in original JSON file
+ * @param modifyFields Function setter or fields to merge
  */
 export const modifyJsonFile: ModifyJsonFileGenericFunction = async (
     path,
-    fields, 
+    modifyFields, 
     options
 ) => {
     const { 
@@ -68,32 +83,32 @@ export const modifyJsonFile: ModifyJsonFileGenericFunction = async (
         throws = true ,
         ifFieldIsMissing = "throw",
         ifFieldIsMissingForSetter = "throw",
-        tabSize: tabSizeOption = "preserve"
+        tabSize = "preserve"
     } = options || {};
     try {
-        const json = await loadJsonFile(path);
+        let {json, indent} = await loadJsonFile(path, { encoding, tabSize });
         // todo remove restriction or not?
         if (!json || typeof json !== "object" || Array.isArray(json)) throw new TypeError(`${path}: JSON root type must be object`);
-        // todo we don't need to read the file twice
-        const rawText = await fs.promises.readFile(path, encoding);
-        const indent = tabSizeOption === "preserve" ? detectIndent(rawText).indent : tabSizeOption === "hard" ? "\t" : tabSizeOption === null ? undefined : " ".repeat(tabSizeOption);
-        
-        for (const [name, value] of Object.entries(fields)) {
-            if (!(name in json)) {
-                const isSetter = typeof value === "function";
-                const generalAction = isSetter ? ifFieldIsMissingForSetter : ifFieldIsMissing;
-                if (generalAction === "throw") throw new InnerError(`Property to modify "${name}" is missing in ${path}`);
-                if (generalAction === "skip") continue;
+        if (typeof modifyFields === "function") {
+            json = modifyFields(json)
+        } else {
+            for (const [name, value] of Object.entries(modifyFields)) {
+                if (!(name in json)) {
+                    const isSetter = typeof value === "function";
+                    const generalAction = isSetter ? ifFieldIsMissingForSetter : ifFieldIsMissing;
+                    if (generalAction === "throw") throw new TypeError(`Property to modify "${name}" is missing in ${path}`);
+                    if (generalAction === "skip") continue;
+                }
+                json[name as string] = typeof value === "function" ? value(json[name as string], json) : value;
             }
-            json[name as string] = typeof value === "function" ? value(json[name as string], json) : value;
         }
 
         await fs.promises.writeFile(
-            path, 
+            path,
             JSON.stringify(json, undefined, indent)
         );
     } catch(err) {
-        if (err.innerError) throw new Error(err.message);
+        // if (err.innerError) throw new Error(err.message);
         if (throws) throw err;
     }
 }

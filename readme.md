@@ -56,7 +56,7 @@ We're using [detect-indent](https://www.npmjs.com/package/detect-indent) to pres
 
 ## TODO
 
-- [ ] Fix. Currently, to preserve the tab size, json file readed twice
+- [ ] Strip bom option
 - [ ] Fix double tsc compilation (and test actual build/)
 - [ ] transformer for paths (most likely babel plugin): 
 
