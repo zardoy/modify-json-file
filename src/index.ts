@@ -103,7 +103,7 @@ export const modifyJsonFile: ModifyJsonFileGenericFunction = async (
 /**
  * Almost the same is sindresorhus/write-pkg, but with proper typing support and setters for fields
  */
-export const modifyPackageJson: ModifyJsonFileFunction<PackageJson> = modifyJsonFile;
+export const modifyPackageJsonFile: ModifyJsonFileFunction<PackageJson> = modifyJsonFile;
 
-export const modifyTsConfigJson: ModifyJsonFileFunction<TsConfigJson> = modifyJsonFile;
+export const modifyTsConfigJsonFile: ModifyJsonFileFunction<TsConfigJson> = modifyJsonFile;
 
