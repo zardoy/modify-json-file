@@ -4,6 +4,10 @@ Simplest way to modify JSON files
 
 [API](https://paka.dev/npm/@zardoy/modify-json)
 
+## Why?
+
+Becaues I got tired of writing read/write function for JSON files, especially when I need to change dozens of files.
+
 ## Usage
 
 - Only async use
