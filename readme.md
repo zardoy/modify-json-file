@@ -6,9 +6,11 @@ Simplest way to modify JSON files
 
 ## Why?
 
-Becaues I got tired of writing read/write function for JSON files, especially when I need to change dozens of files.
+Becaues I got tired of writing `read`/`write` functions for JSON files, especially when I need to change dozens of files.
 
 ## Usage
+
+### Basics
 
 - Only async use
 
@@ -29,18 +31,22 @@ Let's say we *package.json* file:
 And this code:
 
 ```ts
-import { modifyJsonFile } from "@zardoy/modify-json";
+import { modifyJsonFile } from "modify-json-file";
 
-// of course, you should use path module here
-await modifyJsonFile("package.json", {
-    name: s => `super ${s}`,
-    main: "build/electron.js",
-    dependencies: {
-        "type-fest": "^1.0.0"
+// modify package.json in the same dir
+await modifyJsonFile(
+    path.join(__dirname, "package.json"), 
+    {
+        name: s => `super ${s}`,
+        main: "build/electron.js",
+        dependencies: {
+            "type-fest": "^1.0.0"
+        }
     }
-})
+)
 ```
-After running this code, we'll get this package.json:
+
+After running this code, *package.json* will be:
 
 ```json
 {
@@ -53,14 +59,74 @@ After running this code, we'll get this package.json:
 }
 ```
 
-As you can see above, `modifyJsonFile` only merges fields on 1 level depth. Currently, we don't support merging in nested fields.
+As you can see above, `modifyJsonFile` only merges fields **only on top level**. Currently, we don't support merging in nested fields.
 
-We're using [detect-indent](https://www.npmjs.com/package/detect-indent) to preserve the tab size in `.json` files.
+Note that to simplify docs I won't use `path` module anymore. It implies that you always use `path` module to specify path.
 
+Also, I've decided to not to add
+
+### Non-object root value
+
+> Remember, that at root level value can be any valid JSON value: `string`, `number`, `boolean`, `null`, `object` or `array`.
+
+Be aware of modifying non object JSON files (where root type is not an object). For example:
+
+Our code:
+
+```ts
+import { modifyJsonFile } from "modify-json-file";
+
+// telling that root type is number (in this case it's obligatory)
+await modifyJsonFile<number>("package.json", n => n + 1);
+```
+
+Expected JSON:
+
+```json
+// 📁someNumber.json
+5
+```
+
+Actual JSON:
+
+```json
+// 📁someNumber.json
+{
+    "retries": 5
+}
+```
+
+After running the code above, without any warnings you will get this:
+
+```json
+// 📁someNumber.json
+"[object Object]1"
+```
+
+That's because callback `n => n + 1` has transformed `n` (object) into string.
+
+Here, despite of the TS type (number), `n` is object in runtime, so `n + 1` just stringified `n` and returned `[object Object]1`.
+Then this module just stringified the string to store output as valid JSON string in file.
+
+Remember, **this module doesn't do any type checking in runtime**, you need to use `typeof` in callback for checking root types or schema validators (like [ajv](http://npmjs.com/ajv)) for objects.
+
+### Formatting
+
+By default, it will preserve tab size (thanks to [detect-indent](https://www.npmjs.com/package/detect-indent)), but you can control this by overriding `tabSize` option. For example, we can use it to just format the file:
+
+```ts
+import { modifyJsonFile } from "modify-json-file";
+
+// this will format file to use \t (hard tabs)
+await modifyJsonFile("someFile.json", {}, { tabSize: "hard" });
+```
 
 ## TODO
 
 Docs:
+
+- [ ] Examples with immer
+- [ ] Make usage more clear
 - [ ] Fix auto generated docs
 - [ ] Describe all possible usage cases
 - [ ] Give a hint, that it doesn't perform schema checking again actual file contents when type is passed into generic function `modifyJsonFile`
