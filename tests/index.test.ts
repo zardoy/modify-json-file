@@ -9,10 +9,7 @@ import { modifyJsonFile, modifyPackageJsonFile } from "../build/";
 
 const jsonFilePath = path.join(__dirname, "testing-file.json");
 
-// that's fine until tests are running with --serial flag
-let dataToWrite;
-
-test.beforeEach(async () => {
+const prepare = async (dataToWrite?) => {
     await jsonfile.writeFile(jsonFilePath, dataToWrite ?? {
         "name": "package",
         "main": "index.js",
@@ -22,13 +19,14 @@ test.beforeEach(async () => {
             "fdir": ">=2"
         }
     }, { spaces: 4 });
-});
+};
 
 test.afterEach.always(async () => {
     await del(jsonFilePath);
 });
 
 test("modifies JSON file", async t => {
+    await prepare();
     await modifyJsonFile(jsonFilePath, {
         name: s => `super ${s}`,
         main: "build/electron.js",
@@ -41,6 +39,7 @@ test("modifies JSON file", async t => {
 });
 
 test("modifies package.json file with async function", async t => {
+    await prepare();
     await modifyPackageJsonFile(jsonFilePath, async ({ main }) => {
         return { types: main, name: "ahaha" };
     });
@@ -49,8 +48,8 @@ test("modifies package.json file with async function", async t => {
 });
 
 test("modifies package.json file which has numeric type", async t => {
-    dataToWrite = 50;
-    await modifyPackageJsonFile(jsonFilePath, n => n + 5);
+    await prepare(50);
+    await modifyJsonFile<number>(jsonFilePath, n => n + 5);
     const modifiedJsonFle = await fs.readFile(jsonFilePath, "utf8");
     t.snapshot(modifiedJsonFle);
 });

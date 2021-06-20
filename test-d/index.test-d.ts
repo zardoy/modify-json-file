@@ -1,7 +1,7 @@
 import { expectType } from "tsd";
 
-// todo change to ../build
-import { modifyJsonFile, modifyPackageJsonFile } from "../src/";
+// todo-high https://nodejs.org/api/packages.html#packages_package_entry_points
+import { modifyJsonFile, modifyPackageJsonFile } from "../build";
 
 modifyJsonFile("path.json", {
     value: 5,
