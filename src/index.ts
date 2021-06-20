@@ -1,4 +1,4 @@
-import { PackageJson, PartialDeep, TsConfigJson } from "type-fest";
+import { PackageJson, PartialDeep, TsConfigJson, JsonValue } from "type-fest";
 import detectIndent from "detect-indent";
 import stripBom from "strip-bom";
 import parseJson from "parse-json";
@@ -39,14 +39,16 @@ type ModifyFields<T extends object> = {
 };
 
 type ModifyFunction<T> = (oldJson: T) => MaybePromise<T>;
+// todo why can't use JsonValue from type-fest
+type JsonRoot = number | string | boolean | null | object | any[];
 
-export type ModifyJsonFileFunction<T> = (
+export type ModifyJsonFileFunction<T extends JsonRoot> = (
     path: string,
     modifyFields: T extends object ? ModifyFields<T> | ModifyFunction<T> : ModifyFunction<T>,
     options?: Partial<Options>
 ) => Promise<void>;
 
-type ModifyJsonFileGenericFunction = <T extends any = object>(
+type ModifyJsonFileGenericFunction = <T extends JsonRoot = object>(
     path: string,
     modifyFields: T extends object ? ModifyFields<T> | ModifyFunction<T> : ModifyFunction<T>,
     options?: Partial<Options>
