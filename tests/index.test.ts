@@ -4,6 +4,7 @@ import fs from "fs/promises";
 import jsonfile from "jsonfile";
 import path from "path";
 
+// todo convert paths
 import { modifyJsonFile, modifyPackageJsonFile } from "../build/";
 
 const jsonFilePath = path.join(__dirname, "testing-file.json");
@@ -47,3 +48,9 @@ test("modifies package.json file with async function", async t => {
     t.snapshot(modifiedJsonFle);
 });
 
+test("modifies package.json file which has numeric type", async t => {
+    dataToWrite = 50;
+    await modifyPackageJsonFile(jsonFilePath, n => n + 5);
+    const modifiedJsonFle = await fs.readFile(jsonFilePath, "utf8");
+    t.snapshot(modifiedJsonFle);
+});

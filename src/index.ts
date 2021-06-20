@@ -1,4 +1,4 @@
-import { PackageJson, TsConfigJson } from "type-fest";
+import { PackageJson, PartialDeep, TsConfigJson } from "type-fest";
 import detectIndent from "detect-indent";
 import stripBom from "strip-bom";
 import parseJson from "parse-json";
@@ -31,27 +31,30 @@ type Options = PartialDeep<{
      * @default "preserve"
      *  */
     tabSize: null | number | "preserve" | "hard";
-}>
+}>;
 
-type GettersDeep<T extends object> = {
-    [K in keyof T]: (oldValue: T[K], json: T) => T[K]
+type ModifyFields<T extends object> = {
+    [K in keyof T]?: T[K] | ((oldValue: T[K], json: T) => T[K])
     //T[K] extends object ? ((oldValue: T[K]) => unknown)/*  | GettersDeep<T[K]> */ : (oldValue: T[K]) => unknown
 };
 
-export type ModifyJsonFileFunction<T extends object> = (
-    path: string,
-    modifyFields: Partial<T | GettersDeep<T>> | ((oldJson: T) => MaybePromise<T>),
-    options?: Options
-) => Promise<void>;
+type ModifyFunction<T> = (oldJson: T) => MaybePromise<T>;
 
-type ModifyJsonFileGenericFunction = <T extends object>(
+export type ModifyJsonFileFunction<T> = (
     path: string,
-    modifyFields: Partial<T | GettersDeep<T>> | ((oldJson: T) => MaybePromise<T>),
+    modifyFields: T extends object ? ModifyFields<T> | ModifyFunction<T> : ModifyFunction<T>,
     options?: Partial<Options>
 ) => Promise<void>;
 
+type ModifyJsonFileGenericFunction = <T extends any = object>(
+    path: string,
+    modifyFields: T extends object ? ModifyFields<T> | ModifyFunction<T> : ModifyFunction<T>,
+    options?: Partial<Options>
+) => Promise<void>;
+
+type LoadJsonFileOptions = Required<Pick<Options, "encoding" | "tabSize">>;
 /** returns additional info, not only JSON */
-const loadJsonFile = async (filePath: string, { encoding, tabSize }: Pick<Options, "encoding" | "tabSize">) => {
+const loadJsonFile = async (filePath: string, { encoding, tabSize }: LoadJsonFileOptions) => {
     const contents = stripBom(
         await fs.promises.readFile(filePath, encoding)
     );
@@ -73,7 +76,7 @@ const loadJsonFile = async (filePath: string, { encoding, tabSize }: Pick<Option
  * modifies **original** JSON file
  * You can pass generic, that reflects the structure of original JSON file
  * 
- * @param modifyFields Fields to merge or callback (can be async). If callback is passed, JSON fields won't be merged.
+ * @param modifyFields If file contents is object, you can pass fields to merge or callback (can be async). If callback is passed, JSON fields won't be merged. In case if file contents is not an object, you must pass callback.
  */
 export const modifyJsonFile: ModifyJsonFileGenericFunction = async (
     path,
@@ -89,19 +92,22 @@ export const modifyJsonFile: ModifyJsonFileGenericFunction = async (
     } = options || {};
     try {
         let { json, indent } = await loadJsonFile(path, { encoding, tabSize });
-        // todo remove restriction or not?
-        if (!json || typeof json !== "object" || Array.isArray(json)) throw new TypeError(`${path}: JSON root type must be object`);
         if (typeof modifyFields === "function") {
             json = await modifyFields(json);
         } else {
-            for (const [name, value] of Object.entries(modifyFields)) {
+            if (typeof json !== "object" || Array.isArray(json)) throw new TypeError(`${path}: Root type is not object. Only callback can be used`);
+            for (const parts of Object.entries(modifyFields)) {
+                // todo fix typescript types workaround
+                const name = parts[0] as string;
+                const value = parts[1] as any;
+
+                const isSetter = typeof value === "function";
                 if (!(name in json)) {
-                    const isSetter = typeof value === "function";
                     const generalAction = isSetter ? ifFieldIsMissingForSetter : ifFieldIsMissing;
                     if (generalAction === "throw") throw new TypeError(`Property to modify "${name}" is missing in ${path}`);
                     if (generalAction === "skip") continue;
                 }
-                json[name as string] = typeof value === "function" ? value(json[name as string], json) : value;
+                json[name as string] = isSetter ? value(json[name as string], json) : value;
             }
         }
 
@@ -110,7 +116,6 @@ export const modifyJsonFile: ModifyJsonFileGenericFunction = async (
             JSON.stringify(json, undefined, indent)
         );
     } catch (err) {
-        // if (err.innerError) throw new Error(err.message);
         if (throws) throw err;
     }
 };

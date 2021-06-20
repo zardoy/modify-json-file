@@ -60,6 +60,12 @@ We're using [detect-indent](https://www.npmjs.com/package/detect-indent) to pres
 
 ## TODO
 
+Docs:
+- [ ] Fix auto generated docs
+- [ ] Describe all possible usage cases
+- [ ] Give a hint, that it doesn't perform schema checking again actual file contents when type is passed into generic function `modifyJsonFile`
+
+- [ ] Performance investigation (issues welcome)
 - [ ] Strip bom option
 - [ ] Fix double tsc compilation (and test actual build/)
 - [ ] transformer for paths (most likely babel plugin): 
