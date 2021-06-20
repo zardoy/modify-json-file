@@ -37,8 +37,8 @@ type ModifyFields<T extends object> = {
     [K in keyof T]?: T[K] | ((oldValue: T[K], json: T) => T[K])
     //T[K] extends object ? ((oldValue: T[K]) => unknown)/*  | GettersDeep<T[K]> */ : (oldValue: T[K]) => unknown
 };
-
 type ModifyFunction<T> = (oldJson: T) => MaybePromise<T>;
+
 // todo why can't use JsonValue from type-fest
 type JsonRoot = number | string | boolean | null | object | any[];
 
@@ -95,11 +95,11 @@ export const modifyJsonFile: ModifyJsonFileGenericFunction = async (
     try {
         let { json, indent } = await loadJsonFile(path, { encoding, tabSize });
         if (typeof modifyFields === "function") {
-            json = await modifyFields(json);
+            json = await (modifyFields as any)(json);
         } else {
             if (typeof json !== "object" || Array.isArray(json)) throw new TypeError(`${path}: Root type is not object. Only callback can be used`);
             for (const parts of Object.entries(modifyFields)) {
-                // todo fix typescript types workaround
+                // todo fix typescript types
                 const name = parts[0] as string;
                 const value = parts[1] as any;
 
