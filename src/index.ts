@@ -6,7 +6,7 @@ import fs from "graceful-fs";
 
 type MaybePromise<T> = T | Promise<T>;
 
-interface Options {
+type Options = PartialDeep<{
     /** @default utf-8 */
     encoding: BufferEncoding;
     /** 
@@ -31,7 +31,7 @@ interface Options {
      * @default "preserve"
      *  */
     tabSize: null | number | "preserve" | "hard";
-}
+}>
 
 type GettersDeep<T extends object> = {
     [K in keyof T]: (oldValue: T[K], json: T) => T[K]
