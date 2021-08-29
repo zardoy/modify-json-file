@@ -21,6 +21,7 @@ Let's say we *package.json* file:
     "name": "package",
     "main": "index.js",
     "author": "eldar",
+    "files": [ "build" ],
     "dependencies": {
         "type-fest": "*",
         "fdir": ">=2"
@@ -35,10 +36,11 @@ import { modifyJsonFile } from "modify-json-file";
 
 // modify package.json in the same dir
 await modifyJsonFile(
-    path.join(__dirname, "package.json"), 
+    path.join(__dirname, "package.json"),
     {
         name: s => `super ${s}`,
         main: "build/electron.js",
+        files: undefined, // removing the property
         dependencies: {
             "type-fest": "^1.0.0"
         }
@@ -46,7 +48,7 @@ await modifyJsonFile(
 )
 ```
 
-After running this code, *package.json* will be:
+After running the code, *package.json* will be:
 
 ```json
 {
@@ -59,11 +61,11 @@ After running this code, *package.json* will be:
 }
 ```
 
-As you can see above, `modifyJsonFile` only merges fields **only on top level**. Currently, we don't support merging in nested fields.
+As you can see above, `modifyJsonFile` only merges **only on top level** properties. Currently, there is no support for nested property merging.
 
-Note that to simplify docs I won't use `path` module anymore. It implies that you always use `path` module to specify path.
+Note that to simplify docs I won't use `path` module here. It implies that you always use `path` module to specify path correctly.
 
-Also, I've decided to not to add
+> In example above, `modifyPackageJson` should be used for TypeScript intellisense
 
 ### Non-object root value
 
@@ -134,7 +136,7 @@ Docs:
 - [ ] Performance investigation (issues welcome)
 - [ ] Strip bom option
 - [ ] Fix double tsc compilation (and test actual build/)
-- [ ] transformer for paths (most likely babel plugin): 
+- [ ] transformer for paths (most likely babel plugin):
 
 ```ts
 await fs.promises.readFile(./package.json, "utf8");
