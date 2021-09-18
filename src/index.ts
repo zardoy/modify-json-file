@@ -59,7 +59,7 @@ type LoadJsonFileOptions = Required<Pick<Options, 'encoding' | 'tabSize'>>
 const loadJsonFile = async (filePath: string, { encoding, tabSize }: LoadJsonFileOptions) => {
     const contents = stripBom(await fs.promises.readFile(filePath, encoding))
     return {
-        json: parseJson(contents, filePath),
+        json: parseJson(contents, filePath) as JsonRoot,
         indent: tabSize === 'preserve' ? detectIndent(contents).indent : tabSize === 'hard' ? '\t' : tabSize === null ? undefined : ' '.repeat(tabSize),
     }
 }
@@ -82,7 +82,7 @@ export const modifyJsonFile: ModifyJsonFileGenericFunction = async (path, modify
         if (typeof modifyFields === 'function') {
             json = await (modifyFields as any)(json)
         } else {
-            if (typeof json !== 'object' || Array.isArray(json)) throw new TypeError(`${path}: Root type is not object. Only callback can be used`)
+            if (typeof json !== 'object' || Array.isArray(json) || json === null) throw new TypeError(`${path}: Root type is not object. Only callback can be used`)
             for (const parts of Object.entries(modifyFields)) {
                 // todo fix typescript types
                 const name = parts[0] as string
