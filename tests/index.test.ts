@@ -1,7 +1,7 @@
 /// <reference types="jest" />
 
-import gracefulFs from 'graceful-fs'
 import { join } from 'path'
+import gracefulFs from 'graceful-fs'
 
 import { modifyJsonFile, ModifyJsonFileFunction, modifyTsConfigJsonFile } from '../src'
 import { JsonRoot, loadJsonFile } from '../src/loadJsonFile'
@@ -9,7 +9,7 @@ import { JsonRoot, loadJsonFile } from '../src/loadJsonFile'
 // I know that it's hard to read but I did my best
 
 // TODO reset mock after each test
-const prepare = async <JSON extends boolean = true>({
+const prepare = <JSON extends boolean = true>({
     data,
     // TODO why can't specify default here
     json,
@@ -30,9 +30,10 @@ const prepare = async <JSON extends boolean = true>({
 }
 
 /** Ensure isn't mocked */
-const readAndParse = async (path: string): Promise<JsonRoot> => {
-    return JSON.parse(await gracefulFs.promises.readFile(path, 'utf-8'))
-}
+const readFile = async (path: string) => gracefulFs.promises.readFile(path, 'utf-8')
+
+/** Ensure isn't mocked */
+const readAndParse = async (path: string): Promise<JsonRoot> => JSON.parse(await readFile(path))
 
 type TestData = any
 type ModifyParams = Parameters<ModifyJsonFileFunction<TestData>>
@@ -192,25 +193,25 @@ test("Don't throw error if option is provided on missing property in input", asy
 test('loader removes comments and trailing commas', async () => {
     const { json } = await loadJsonFile(join(__dirname, './tsconfig.fixture.json'), { encoding: 'utf-8', removeJsonc: true, tabSize: 'preserve' })
     expect(json).toMatchInlineSnapshot(`
-Object {
-  "compilerOptions": Object {
-    "module": "commonjs",
-    "noImplicitAny": true,
-    "outDir": "dist",
-    "preserveConstEnums": true,
-    "removeComments": true,
-    "sourceMap": true,
-  },
-  "files": Array [
-    "./src/foo.ts",
-  ],
-}
-`)
+        Object {
+          "compilerOptions": Object {
+            "module": "commonjs",
+            "noImplicitAny": true,
+            "outDir": "dist",
+            "preserveConstEnums": true,
+            "removeComments": true,
+            "sourceMap": true,
+          },
+          "files": Array [
+            "./src/foo.ts",
+          ],
+        }
+    `)
 })
 
 test('Modifies TSConfig (removes comments and trailing commas)', async () => {
     prepare({
-        data: await gracefulFs.promises.readFile(join(__dirname, './tsconfig.fixture.json'), 'utf-8'),
+        data: await readFile(join(__dirname, './tsconfig.fixture.json')),
         json: false,
         writeCallback(data) {
             expect(JSON.parse(data)).toMatchInlineSnapshot(`
@@ -240,11 +241,29 @@ Object {
         '',
         {
             references: [{ path: 'project' }],
-            compilerOptions: (options = {}) => ({ ...options, composite: true }),
+            compilerOptions: (options = {}) => ({
+                ...options,
+                composite: true,
+            }),
         },
         {
             ifPropertyIsMissing: 'add',
             ifPropertyIsMissingForSetter: 'pass',
         },
     )
+})
+
+test('Dir option', async () => {
+    await modifyTsConfigJsonFile(
+        { dir: join(__dirname, './someDir') },
+        {
+            include: ['.'],
+        },
+        {
+            ifPropertyIsMissing: 'add',
+        },
+    )
+    const tsconfigPath = join(__dirname, './someDir/tsconfig.json')
+    expect(await readFile(tsconfigPath)).toMatchInlineSnapshot(`"{\\"include\\":[\\".\\"]}"`)
+    await gracefulFs.promises.writeFile(tsconfigPath, '{}', 'utf-8')
 })

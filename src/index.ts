@@ -1,4 +1,5 @@
 import fs from 'graceful-fs'
+import { join } from 'path'
 import { PackageJson, TsConfigJson } from 'type-fest'
 import { JsonRoot, loadJsonFile } from './loadJsonFile'
 
@@ -59,8 +60,8 @@ type ModifyFunction<T> = (oldJson: T) => MaybePromise<T>
 
 // TODO remove duplicated definitions
 
-export type ModifyJsonFileFunction<T extends JsonRoot> = (
-    path: string,
+export type ModifyJsonFileFunction<T extends JsonRoot, DefaultName extends boolean = false> = (
+    path: DefaultName extends true ? string | { dir: string } : string,
     modifyProperties: T extends object ? ModifyProperties<T> | ModifyFunction<T> : ModifyFunction<T>,
     options?: Partial<Options>,
 ) => Promise<void>
@@ -129,7 +130,16 @@ export const modifyJsonFile: ModifyJsonFileGenericFunction = async (path, modify
 /**
  * Almost the same is sindresorhus/write-pkg, but with proper typing support and setters for properties
  */
-export const modifyPackageJsonFile: ModifyJsonFileFunction<PackageJson> = modifyJsonFile
+export const modifyPackageJsonFile: ModifyJsonFileFunction<PackageJson, true> = (path, modify, options = {}) => {
+    if (typeof path === 'object') {
+        path = join(path.dir, 'package.json')
+    }
+    return modifyJsonFile(path, modify, { removeJsonc: true, ...options })
+}
 
-export const modifyTsConfigJsonFile: ModifyJsonFileFunction<TsConfigJson> = (path, modify, options = {}) =>
-    modifyJsonFile(path, modify, { removeJsonc: true, ...options })
+export const modifyTsConfigJsonFile: ModifyJsonFileFunction<TsConfigJson, true> = (path, modify, options = {}) => {
+    if (typeof path === 'object') {
+        path = join(path.dir, 'tsconfig.json')
+    }
+    return modifyJsonFile(path, modify, { removeJsonc: true, ...options })
+}

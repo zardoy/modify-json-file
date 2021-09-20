@@ -139,7 +139,7 @@ This is temporary limitation and the option will be renamed to `jsonc` once limi
 
 Docs:
 
-- [ ] Imply tsconfig.json and package.json if path is directory: `{ dir: '.' }`
+- [ ] Helper exports section
 - [ ] Extend package.json typings
 - [ ] Examples with immer
 - [ ] Make usage more clear
