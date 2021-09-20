@@ -1,12 +1,10 @@
-import { PackageJson, PartialDeep, TsConfigJson, JsonValue } from 'type-fest'
-import detectIndent from 'detect-indent'
-import stripBom from 'strip-bom'
-import parseJson from 'parse-json'
 import fs from 'graceful-fs'
+import { PackageJson, TsConfigJson } from 'type-fest'
+import { JsonRoot, loadJsonFile } from './loadJsonFile'
 
 type MaybePromise<T> = T | Promise<T>
 
-type Options = PartialDeep<{
+export type Options = Partial<{
     /** @default utf-8 */
     encoding: BufferEncoding
     /**
@@ -15,15 +13,30 @@ type Options = PartialDeep<{
      *  */
     throws: boolean
     // ideally this lib should integrate with json validator
-    /** @default "throw" (silent if throws: false) */
+    /**
+     * @default "throw" (silent if throws: false)
+     * @deprecated use `ifPropertyIsMissing`
+     */
     ifFieldIsMissing: 'throw' | 'skip' | 'add'
     /**
+     * @default "throw" (silent if throws: false)
+     */
+    ifPropertyIsMissing: 'throw' | 'skip' | 'add'
+    /**
      * - throw - throws (silent if throws: false)
-     *-  skip - won't call the function
+     * - skip - won't call the function
+     * - pass - pass the `undefined` value
+     * @default "throw"
+     * @deprecated use `ifPropertyIsMissingForSetter`
+     * */
+    ifFieldIsMissingForSetter: 'throw' | 'skip' | 'pass'
+    /**
+     * - throw - throws (silent if throws: false)
+     * - skip - won't call the function
      * - pass - pass the `undefined` value
      * @default "throw"
      * */
-    ifFieldIsMissingForSetter: 'throw' | 'skip' | 'pass'
+    ifPropertyIsMissingForSetter: 'throw' | 'skip' | 'pass'
     /**
      * - null - disable formatting
      * - hard - one hard tab \t
@@ -31,38 +44,32 @@ type Options = PartialDeep<{
      * @default "preserve"
      *  */
     tabSize: null | number | 'preserve' | 'hard'
+    /**
+     * Allows to modify `jsonc` files (json with comments and trailing commas). These files are usually used by VSCode
+     * @default false
+     */
+    removeJsonc: boolean
 }>
 
-type ModifyFields<T extends object> = {
+type ModifyProperties<T extends object> = {
     [K in keyof T]?: T[K] | ((oldValue: T[K], json: T) => T[K])
     //T[K] extends object ? ((oldValue: T[K]) => unknown)/*  | GettersDeep<T[K]> */ : (oldValue: T[K]) => unknown
 }
 type ModifyFunction<T> = (oldJson: T) => MaybePromise<T>
 
-// todo why can't use JsonValue from type-fest
-type JsonRoot = number | string | boolean | null | object | any[]
+// TODO remove duplicated definitions
 
 export type ModifyJsonFileFunction<T extends JsonRoot> = (
     path: string,
-    modifyFields: T extends object ? ModifyFields<T> | ModifyFunction<T> : ModifyFunction<T>,
+    modifyProperties: T extends object ? ModifyProperties<T> | ModifyFunction<T> : ModifyFunction<T>,
     options?: Partial<Options>,
 ) => Promise<void>
 
 type ModifyJsonFileGenericFunction = <T extends JsonRoot = object>(
     path: string,
-    modifyFields: T extends object ? ModifyFields<T> | ModifyFunction<T> : ModifyFunction<T>,
+    modifyProperties: T extends object ? ModifyProperties<T> | ModifyFunction<T> : ModifyFunction<T>,
     options?: Partial<Options>,
 ) => Promise<void>
-
-type LoadJsonFileOptions = Required<Pick<Options, 'encoding' | 'tabSize'>>
-/** returns additional info, not only JSON */
-const loadJsonFile = async (filePath: string, { encoding, tabSize }: LoadJsonFileOptions) => {
-    const contents = stripBom(await fs.promises.readFile(filePath, encoding))
-    return {
-        json: parseJson(contents, filePath) as JsonRoot,
-        indent: tabSize === 'preserve' ? detectIndent(contents).indent : tabSize === 'hard' ? '\t' : tabSize === null ? undefined : ' '.repeat(tabSize),
-    }
-}
 
 /** It's just Error */
 // class InnerError extends Error {
@@ -73,27 +80,40 @@ const loadJsonFile = async (filePath: string, { encoding, tabSize }: LoadJsonFil
  * modifies **original** JSON file
  * You can pass generic, that reflects the structure of original JSON file
  *
- * @param modifyFields If file contents is object, you can pass fields to merge or callback (can be async). If callback is passed, JSON fields won't be merged. In case if file contents is not an object, you must pass callback.
+ * @param modifyProperties If file contents is object, you can pass properties to merge or callback (can be async). If callback is passed, JSON properties won't be merged. In case if file contents is not an object, you must pass callback.
  */
-export const modifyJsonFile: ModifyJsonFileGenericFunction = async (path, modifyFields, options) => {
-    const { encoding = 'utf-8', throws = true, ifFieldIsMissing = 'throw', ifFieldIsMissingForSetter = 'throw', tabSize = 'preserve' } = options || {}
+export const modifyJsonFile: ModifyJsonFileGenericFunction = async (path, modifyProperties, options = {}) => {
+    // TODO handle deprecated gracefully
+    if (options.ifFieldIsMissing) options.ifPropertyIsMissing = options.ifFieldIsMissing
+    if (options.ifFieldIsMissingForSetter) options.ifPropertyIsMissingForSetter = options.ifFieldIsMissingForSetter
+
+    const {
+        encoding = 'utf-8',
+        throws = true,
+        ifPropertyIsMissing = 'throw',
+        ifPropertyIsMissingForSetter = 'throw',
+        tabSize = 'preserve',
+        removeJsonc = false,
+    } = options
     try {
-        let { json, indent } = await loadJsonFile(path, { encoding, tabSize })
-        if (typeof modifyFields === 'function') {
-            json = await (modifyFields as any)(json)
+        let { json, indent } = await loadJsonFile(path, { encoding, tabSize, removeJsonc })
+        if (typeof modifyProperties === 'function') {
+            // TODO why arg is never
+            json = await (modifyProperties as any)(json)
         } else {
-            if (typeof json !== 'object' || Array.isArray(json) || json === null) throw new TypeError(`${path}: Root type is not object. Only callback can be used`)
-            for (const parts of Object.entries(modifyFields)) {
-                // todo fix typescript types
-                const name = parts[0] as string
-                const value = parts[1] as any
+            if (typeof json !== 'object' || Array.isArray(json) || json === null)
+                throw new TypeError(`${path}: Root type is not object. Only callback can be used`)
+            for (const parts of Object.entries(modifyProperties)) {
+                const name = parts[0]
+                const value = parts[1]
 
                 const isSetter = typeof value === 'function'
                 if (!(name in json)) {
-                    const generalAction = isSetter ? ifFieldIsMissingForSetter : ifFieldIsMissing
+                    const generalAction = isSetter ? ifPropertyIsMissingForSetter : ifPropertyIsMissing
                     if (generalAction === 'throw') throw new TypeError(`Property to modify "${name}" is missing in ${path}`)
                     if (generalAction === 'skip') continue
                 }
+                // `pass` and `add` handled there
                 json[name as string] = isSetter ? value(json[name as string], json) : value
             }
         }
@@ -107,8 +127,9 @@ export const modifyJsonFile: ModifyJsonFileGenericFunction = async (path, modify
 // todo: use read-pkg / write-pkg for normalization
 
 /**
- * Almost the same is sindresorhus/write-pkg, but with proper typing support and setters for fields
+ * Almost the same is sindresorhus/write-pkg, but with proper typing support and setters for properties
  */
 export const modifyPackageJsonFile: ModifyJsonFileFunction<PackageJson> = modifyJsonFile
 
-export const modifyTsConfigJsonFile: ModifyJsonFileFunction<TsConfigJson> = modifyJsonFile
+export const modifyTsConfigJsonFile: ModifyJsonFileFunction<TsConfigJson> = (path, modify, options = {}) =>
+    modifyJsonFile(path, modify, { removeJsonc: true, ...options })

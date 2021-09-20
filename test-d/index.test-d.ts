@@ -1,7 +1,6 @@
 import { expectType } from 'tsd'
 
-// todo-high https://nodejs.org/api/packages.html#packages_package_entry_points
-import { modifyJsonFile, modifyPackageJsonFile } from '../build'
+import { modifyJsonFile, modifyPackageJsonFile } from '../src'
 
 modifyJsonFile('path.json', {
     value: 5,
@@ -29,7 +28,11 @@ modifyPackageJsonFile('someDirWithPackageJson', {
         string: 'string',
     },
     author: {
-        //@ts-expect-error
+        //@ts-expect-error unknown prop
         name: name => `super ${name}`,
     },
+    files: undefined,
+    // removing react-scripts from devDependencies
+    // TODO
+    // devDependencies: deps => ({ ...deps, 'react-script': undefined }),
 })

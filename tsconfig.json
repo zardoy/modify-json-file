@@ -1,6 +1,4 @@
 {
     "extends": "@zardoy/tsconfig/node",
-    "compilerOptions": {
-        "declaration": true
-    }
+    "include": ["."]
 }

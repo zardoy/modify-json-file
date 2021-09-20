@@ -10,11 +10,11 @@ Becaues I got tired of writing `read`/`write` functions for JSON files, especial
 
 ## Usage
 
-### Basics
-
 - Only async use
 
-Let's say we *package.json* file:
+### Basic Example
+
+Let's start with *package.json* file:
 ```json
 // 📁package.json
 {
@@ -63,9 +63,11 @@ After running the code, *package.json* will be:
 
 As you can see above, `modifyJsonFile` only merges **only on top level** properties. Currently, there is no support for nested property merging.
 
-Note that to simplify docs I won't use `path` module here. It implies that you always use `path` module to specify path correctly.
+Note that to simplify docs I won't use `path` module here, but you should use it everywhere.
 
-> In example above, `modifyPackageJson` should be used for TypeScript intellisense
+> In example above, `modifyPackageJson` should be used to provider typing for you
+
+As always, for more usage examples you can look into `test-d/index.test-d.ts` or `tests` files.
 
 ### Non-object root value
 
@@ -123,10 +125,22 @@ import { modifyJsonFile } from "modify-json-file";
 await modifyJsonFile("someFile.json", {}, { tabSize: "hard" });
 ```
 
+## JSONC
+
+Pass `{ removeJsonc: true }` option to enable processing `jsonc` files.
+
+**WARNING**, this option will remove comments and trailing commas forever!
+
+This is temporary limitation and the option will be renamed to `jsonc` once limitation is removed.
+
+> `modifyTsConfigJsonFile` has this option enabled by default
+
 ## TODO
 
 Docs:
 
+- [ ] Imply tsconfig.json and package.json if path is directory: `{ dir: '.' }`
+- [ ] Extend package.json typings
 - [ ] Examples with immer
 - [ ] Make usage more clear
 - [ ] Fix auto generated docs
