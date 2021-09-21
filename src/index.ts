@@ -14,6 +14,7 @@ export type Options = Partial<{
      *  */
     throws: boolean
     // ideally this lib should integrate with json validator
+    // TODO paste {@linkcode Options.ifPropertyIsMissing} when the plugin is ready
     /**
      * @default "throw" (silent if throws: false)
      * @deprecated use `ifPropertyIsMissing`
@@ -126,6 +127,11 @@ export const modifyJsonFile: ModifyJsonFileGenericFunction = async (path, modify
 }
 
 // todo: use read-pkg / write-pkg for normalization
+
+type TEST = 'HAYA'
+
+/** Use {@linkcode TEST instead}  */
+const d = 5
 
 /**
  * Almost the same is sindresorhus/write-pkg, but with proper typing support and setters for properties
