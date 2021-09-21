@@ -23,8 +23,23 @@
         "build"
     ],
     "scripts": {
-        "prepublishOnly": "tsc -p tsconfig.build.json && pnpm test",
+        "prepublishOnly": "node node_modules/typescript/bin/tsc -p tsconfig.build.json && pnpm test",
         "test": "tsd && jest"
+    },
+    "tsd": {
+        "extends": "@zardoy/tsconfig/node",
+        "compilerOptions": {
+            "baseUrl": ".",
+            "paths": {
+                "modify-json-file": [
+                    "./build"
+                ]
+            }
+        },
+        "include": [
+            "build",
+            "test-d"
+        ]
     },
     "engines": {
         "node": ">=12"

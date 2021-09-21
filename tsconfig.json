@@ -1,4 +1,10 @@
 {
     "extends": "@zardoy/tsconfig/node",
+    "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+            "modify-json-file": ["./src"]
+        }
+    },
     "include": ["."]
 }

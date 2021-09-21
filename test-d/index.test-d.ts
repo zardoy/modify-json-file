@@ -1,6 +1,7 @@
 import { expectType } from 'tsd'
 
-import { modifyJsonFile, modifyPackageJsonFile } from '../src'
+// TODO-high map to build/ only on script run somehow
+import { modifyJsonFile, modifyPackageJsonFile } from 'modify-json-file'
 
 modifyJsonFile('path.json', {
     value: 5,
