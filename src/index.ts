@@ -53,9 +53,9 @@ export type Options = Partial<{
     removeJsonc: boolean
 }>
 
-type ModifyProperties<T extends object> = {
+type ModifyProperties<T extends Record<string, any>> = {
     [K in keyof T]?: T[K] | ((oldValue: T[K], json: T) => T[K])
-    //T[K] extends object ? ((oldValue: T[K]) => unknown)/*  | GettersDeep<T[K]> */ : (oldValue: T[K]) => unknown
+    //T[K] extends Record<string, any> ? ((oldValue: T[K]) => unknown)/*  | GettersDeep<T[K]> */ : (oldValue: T[K]) => unknown
 }
 type ModifyFunction<T> = (oldJson: T) => MaybePromise<T>
 
@@ -63,13 +63,13 @@ type ModifyFunction<T> = (oldJson: T) => MaybePromise<T>
 
 export type ModifyJsonFileFunction<T extends JsonRoot, DefaultName extends boolean = false> = (
     path: DefaultName extends true ? string | { dir: string } : string,
-    modifyProperties: T extends object ? ModifyProperties<T> | ModifyFunction<T> : ModifyFunction<T>,
+    modifyProperties: T extends Record<string, any> ? ModifyProperties<T> | ModifyFunction<T> : ModifyFunction<T>,
     options?: Partial<Options>,
 ) => Promise<void>
 
-type ModifyJsonFileGenericFunction = <T extends JsonRoot = object>(
+type ModifyJsonFileGenericFunction = <T extends JsonRoot = Record<string, any>>(
     path: string,
-    modifyProperties: T extends object ? ModifyProperties<T> | ModifyFunction<T> : ModifyFunction<T>,
+    modifyProperties: T extends Record<string, any> ? ModifyProperties<T> | ModifyFunction<T> : ModifyFunction<T>,
     options?: Partial<Options>,
 ) => Promise<void>
 
