@@ -1,6 +1,6 @@
 import fs from 'graceful-fs'
 import { join } from 'path'
-import { PackageJson, TsConfigJson } from 'type-fest'
+import { PackageJson, PartialDeep, TsConfigJson } from 'type-fest'
 import { JsonRoot, loadJsonFile } from './loadJsonFile'
 
 type MaybePromise<T> = T | Promise<T>
@@ -128,22 +128,18 @@ export const modifyJsonFile: ModifyJsonFileGenericFunction = async (path, modify
 
 // todo: use read-pkg / write-pkg for normalization
 
-type TEST = 'HAYA'
-
-/** Use {@linkcode TEST instead}  */
-const d = 5
-
 /**
  * Almost the same is sindresorhus/write-pkg, but with proper typing support and setters for properties
  */
-export const modifyPackageJsonFile: ModifyJsonFileFunction<PackageJson, true> = (path, modify, options = {}) => {
+// TODO remove workaround once my pr is merged
+export const modifyPackageJsonFile: ModifyJsonFileFunction<PartialDeep<PackageJson>, true> = (path, modify, options = {}) => {
     if (typeof path === 'object') {
         path = join(path.dir, 'package.json')
     }
     return modifyJsonFile(path, modify, { removeJsonc: true, ...options })
 }
 
-export const modifyTsConfigJsonFile: ModifyJsonFileFunction<TsConfigJson, true> = (path, modify, options = {}) => {
+export const modifyTsConfigJsonFile: ModifyJsonFileFunction<PartialDeep<TsConfigJson>, true> = (path, modify, options = {}) => {
     if (typeof path === 'object') {
         path = join(path.dir, 'tsconfig.json')
     }

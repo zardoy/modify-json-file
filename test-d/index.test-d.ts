@@ -2,6 +2,7 @@ import { expectType } from 'tsd'
 
 // TODO-high map to build/ only on script run somehow
 import { modifyJsonFile, modifyPackageJsonFile } from 'modify-json-file'
+import { PackageJson, PartialDeep } from 'type-fest';
 
 modifyJsonFile('path.json', {
     value: 5,
@@ -23,7 +24,7 @@ modifyJsonFile<number>('path.json', n => {
     return n + 5
 })
 
-modifyPackageJsonFile('someDirWithPackageJson', {
+modifyPackageJsonFile('', {
     name: name => `@supertf/${name}`,
     dependencies: {
         string: 'string',
@@ -34,6 +35,18 @@ modifyPackageJsonFile('someDirWithPackageJson', {
     },
     files: undefined,
     // removing react-scripts from devDependencies
-    // TODO
-    // devDependencies: deps => ({ ...deps, 'react-script': undefined }),
+    devDependencies: deps => ({ ...deps, 'react-script': undefined }),
 })
+
+const b: PartialDeep<PackageJson> = {
+    // typesVersions: {
+    //     ">=4": {
+    //         "*": undefined
+    //     }
+    // }
+    scripts: {
+        install: undefined
+    }
+}
+
+modifyPackageJsonFile({ dir: '.' }, old => ({ files: undefined }))
