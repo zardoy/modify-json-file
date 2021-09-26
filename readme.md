@@ -139,18 +139,16 @@ This is temporary limitation and the option will be renamed to `jsonc` once limi
 
 Docs:
 
+- [ ] Custom parser / stringifer (look at quicktype issue) to save property order
 - [ ] Helper exports section
 - [ ] Extend package.json typings
 - [ ] Examples with immer
-- [ ] Make usage more clear
 - [ ] Fix auto generated docs
+- [ ] Runtypes?
 - [ ] Describe all possible usage cases
 - [ ] Give a hint, that it doesn't perform schema checking again actual file contents when type is passed into generic function `modifyJsonFile`
 
-- [ ] Performance investigation (issues welcome)
 - [ ] Strip bom option
-- [ ] Fix double tsc compilation (and test actual build/)
-- [ ] transformer for paths (most likely babel plugin):
 
 ```ts
 await fs.promises.readFile(./package.json, "utf8");

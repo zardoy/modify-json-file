@@ -1,7 +1,8 @@
 import fs from 'graceful-fs'
 import { join } from 'path'
-import { PackageJson, PartialDeep, TsConfigJson } from 'type-fest'
+import { PackageJson, TsConfigJson } from 'type-fest'
 import { JsonRoot, loadJsonFile } from './loadJsonFile'
+import { PartialObjectDeep } from './typesUtils'
 
 type MaybePromise<T> = T | Promise<T>
 
@@ -16,29 +17,10 @@ export type Options = Partial<{
     // ideally this lib should integrate with json validator
     // TODO paste {@linkcode Options.ifPropertyIsMissing} when the plugin is ready
     /**
-     * @default "throw" (silent if throws: false)
-     * @deprecated use `ifPropertyIsMissing`
-     */
-    ifFieldIsMissing: 'throw' | 'skip' | 'add'
-    /**
+     * This check is disabled when function is passed as argument
      * @default "throw" (silent if throws: false)
      */
     ifPropertyIsMissing: 'throw' | 'skip' | 'add'
-    /**
-     * - throw - throws (silent if throws: false)
-     * - skip - won't call the function
-     * - pass - pass the `undefined` value
-     * @default "throw"
-     * @deprecated use `ifPropertyIsMissingForSetter`
-     * */
-    ifFieldIsMissingForSetter: 'throw' | 'skip' | 'pass'
-    /**
-     * - throw - throws (silent if throws: false)
-     * - skip - won't call the function
-     * - pass - pass the `undefined` value
-     * @default "throw"
-     * */
-    ifPropertyIsMissingForSetter: 'throw' | 'skip' | 'pass'
     /**
      * - null - disable formatting
      * - hard - one hard tab \t
@@ -53,24 +35,40 @@ export type Options = Partial<{
     removeJsonc: boolean
 }>
 
-type ModifyProperties<T extends Record<string, any>> = {
-    [K in keyof T]?: T[K] | ((oldValue: T[K], json: T) => T[K])
+type ModifyProperties<T extends Record<string, any>, CallbacksPassUndefined extends boolean> = {
+    [K in keyof T]?: T[K] | ((oldValue: CallbacksPassUndefined extends true ? T[K] | undefined : Exclude<T[K], undefined>, json: T) => T[K])
     //T[K] extends Record<string, any> ? ((oldValue: T[K]) => unknown)/*  | GettersDeep<T[K]> */ : (oldValue: T[K]) => unknown
 }
 type ModifyFunction<T> = (oldJson: T) => MaybePromise<T>
 
 // TODO remove duplicated definitions
 
-export type ModifyJsonFileFunction<T extends JsonRoot, DefaultName extends boolean = false> = (
+export type ModifyJsonFileFunction<T extends JsonRoot, DefaultName extends boolean = false, ActionSetter extends 'throw' | 'skip' | 'pass' = 'throw'> = (
     path: DefaultName extends true ? string | { dir: string } : string,
-    modifyProperties: T extends Record<string, any> ? ModifyProperties<T> | ModifyFunction<T> : ModifyFunction<T>,
-    options?: Partial<Options>,
+    modifyProperties: T extends Record<string, any> ? ModifyProperties<T, ActionSetter extends 'pass' ? true : false> | ModifyFunction<T> : ModifyFunction<T>,
+    options?: Options & {
+        /**
+         * - throw - throws (silent if throws: false)
+         * - skip - won't call the function
+         * - pass - pass the `undefined` value
+         * @default "throw"
+         * */
+        ifPropertyIsMissingForSetter?: ActionSetter
+    },
 ) => Promise<void>
 
-type ModifyJsonFileGenericFunction = <T extends JsonRoot = Record<string, any>>(
+type ModifyJsonFileGenericFunction = <T extends JsonRoot = Record<string, JsonRoot>, ActionSetter extends 'throw' | 'skip' | 'pass' = 'throw'>(
     path: string,
-    modifyProperties: T extends Record<string, any> ? ModifyProperties<T> | ModifyFunction<T> : ModifyFunction<T>,
-    options?: Partial<Options>,
+    modifyProperties: T extends Record<string, any> ? ModifyProperties<T, ActionSetter extends 'pass' ? true : false> | ModifyFunction<T> : ModifyFunction<T>,
+    options?: Options & {
+        /**
+         * - throw - throws (silent if throws: false)
+         * - skip - won't call the function
+         * - pass - pass the `undefined` value
+         * @default "throw"
+         * */
+        ifPropertyIsMissingForSetter?: ActionSetter
+    },
 ) => Promise<void>
 
 /** It's just Error */
@@ -86,8 +84,8 @@ type ModifyJsonFileGenericFunction = <T extends JsonRoot = Record<string, any>>(
  */
 export const modifyJsonFile: ModifyJsonFileGenericFunction = async (path, modifyProperties, options = {}) => {
     // TODO handle deprecated gracefully
-    if (options.ifFieldIsMissing) options.ifPropertyIsMissing = options.ifFieldIsMissing
-    if (options.ifFieldIsMissingForSetter) options.ifPropertyIsMissingForSetter = options.ifFieldIsMissingForSetter
+    // if (options.ifFieldIsMissing) options.ifPropertyIsMissing = options.ifFieldIsMissing
+    // if (options.ifFieldIsMissingForSetter) options.ifPropertyIsMissingForSetter = options.ifFieldIsMissingForSetter
 
     const {
         encoding = 'utf-8',
@@ -131,15 +129,15 @@ export const modifyJsonFile: ModifyJsonFileGenericFunction = async (path, modify
 /**
  * Almost the same is sindresorhus/write-pkg, but with proper typing support and setters for properties
  */
-// TODO remove workaround once my pr is merged
-export const modifyPackageJsonFile: ModifyJsonFileFunction<PartialDeep<PackageJson>, true> = (path, modify, options = {}) => {
+
+export const modifyPackageJsonFile: ModifyJsonFileFunction<PartialObjectDeep<PackageJson>, true> = (path, modify, options = {}) => {
     if (typeof path === 'object') {
         path = join(path.dir, 'package.json')
     }
     return modifyJsonFile(path, modify, { removeJsonc: true, ...options })
 }
 
-export const modifyTsConfigJsonFile: ModifyJsonFileFunction<PartialDeep<TsConfigJson>, true> = (path, modify, options = {}) => {
+export const modifyTsConfigJsonFile: ModifyJsonFileFunction<PartialObjectDeep<TsConfigJson>, true> = (path, modify, options = {}) => {
     if (typeof path === 'object') {
         path = join(path.dir, 'tsconfig.json')
     }

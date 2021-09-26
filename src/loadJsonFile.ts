@@ -4,10 +4,11 @@ import parseJson from 'parse-json'
 import stripBom from 'strip-bom'
 import stripJsonComments from 'strip-json-comments'
 import stripJsonCommas from 'strip-json-trailing-commas'
+import { JsonValue } from 'type-fest'
 import type { Options } from './index'
+import { PartialObjectDeep } from './typesUtils'
 
-// todo why can't use JsonValue from type-fest
-export type JsonRoot = number | string | boolean | null | object | any[]
+export type JsonRoot = JsonValue
 
 type LoadJsonFileOptions = Required<Pick<Options, 'encoding' | 'tabSize' | 'removeJsonc'>>
 /** returns additional info, not only JSON */

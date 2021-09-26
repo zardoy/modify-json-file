@@ -2,15 +2,19 @@ import { expectType } from 'tsd'
 
 // TODO-high map to build/ only on script run somehow
 import { modifyJsonFile, modifyPackageJsonFile } from 'modify-json-file'
-import { PackageJson, PartialDeep } from 'type-fest';
+import { PackageJson, PartialDeep } from 'type-fest'
 
 modifyJsonFile('path.json', {
     value: 5,
-    extremeValue: n => n + 1,
+    // TODO why can't cast
+    extremeValue: n => (n as string) + 1,
+    //@ts-expect-error Nested callback instead of valid JSON
     notAllowed: {
         test: () => 10,
     },
 })
+
+modifyJsonFile<any[]>('', arr => [...arr, ''])
 
 modifyJsonFile<{ someNumber: number; anotherProp: { someString: string } }>('path.json', {
     someNumber: 5,
@@ -19,10 +23,16 @@ modifyJsonFile<{ someNumber: number; anotherProp: { someString: string } }>('pat
 //@ts-expect-error
 modifyJsonFile<number>('path.json', {})
 
-modifyJsonFile<number>('path.json', n => {
-    expectType<number>(n)
-    return n + 5
-})
+modifyJsonFile<number>(
+    'path.json',
+    n => {
+        expectType<number>(n)
+        return n + 5
+    },
+    {
+        // all options are optional
+    },
+)
 
 modifyPackageJsonFile('', {
     name: name => `@supertf/${name}`,
@@ -45,8 +55,8 @@ const b: PartialDeep<PackageJson> = {
     //     }
     // }
     scripts: {
-        install: undefined
-    }
+        install: undefined,
+    },
 }
 
 modifyPackageJsonFile({ dir: '.' }, old => ({ files: undefined }))

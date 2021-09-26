@@ -23,7 +23,7 @@
         "build"
     ],
     "scripts": {
-        "prepublishOnly": "node node_modules/typescript/bin/tsc -p tsconfig.build.json && pnpm test",
+        "prepublishOnly": "tsc -p tsconfig.build.json && pnpm test",
         "test": "tsd && jest"
     },
     "tsd": {
