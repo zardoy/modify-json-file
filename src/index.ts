@@ -124,10 +124,9 @@ export const modifyJsonFile: ModifyJsonFileGenericFunction = async (path, modify
     }
 }
 
-// todo: use read-pkg / write-pkg for normalization
-
 /**
- * Almost the same is sindresorhus/write-pkg, but with proper typing support and setters for properties
+ * `modifyJsonFile` wrapper (helper) with proper typing and `{dir: string}` option.
+ * Does not perform [normalization](https://github.com/npm/normalize-package-data)
  */
 
 export const modifyPackageJsonFile: ModifyJsonFileFunction<PartialObjectDeep<PackageJson>, true> = (path, modify, options = {}) => {
@@ -137,6 +136,7 @@ export const modifyPackageJsonFile: ModifyJsonFileFunction<PartialObjectDeep<Pac
     return modifyJsonFile(path, modify, { removeJsonc: true, ...options })
 }
 
+/** `modifyJsonFile` wrapper (helper) with proper typing and `{dir: string}` option.  */
 export const modifyTsConfigJsonFile: ModifyJsonFileFunction<PartialObjectDeep<TsConfigJson>, true> = (path, modify, options = {}) => {
     if (typeof path === 'object') {
         path = join(path.dir, 'tsconfig.json')
