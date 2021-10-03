@@ -49,7 +49,7 @@ const readmeExample = {
     },
 }
 // TODO don't use it. isn't stable enough
-describe.each<{
+test.each<{
     title: string
     input: TestData
     modify: [ModifyParams[1], ModifyParams[2]?]
@@ -111,11 +111,9 @@ Object {
         modify: [arr => [...arr, 'there']],
         expected: d => expect(d).toMatchInlineSnapshot(`"[50,\\"Hey\\",\\"there\\"]"`),
     },
-])('test data matches expected', ({ title, input, modify, expected }) => {
-    test(title, async () => {
-        prepare({ data: input, writeCallback: expected })
-        await modifyJsonFile('', ...modify)
-    })
+])('test data matches expected: $title', async ({ title, input, modify, expected }) => {
+    prepare({ data: input, writeCallback: expected })
+    await modifyJsonFile('', ...modify)
 })
 
 // The philosophy is that it should modify existing data
