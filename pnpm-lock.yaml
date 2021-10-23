@@ -11,12 +11,11 @@ specifiers:
   eslint-plugin-zardoy-config: ^0.1.0
   graceful-fs: ^4.2.8
   jest: ^27.3.1
+  jsonc-parser: ^3.0.0
   load-json-file: ^6.2.0
   nanoid: ^3.1.30
   parse-json: ^5.2.0
   strip-bom: ^4.0.0
-  strip-json-comments: ^3.1.1
-  strip-json-trailing-commas: ^1.1.0
   ts-jest: ^27.0.7
   tsd: ^0.17.0
   type-fest: ^2.5.1
@@ -25,10 +24,9 @@ specifiers:
 dependencies:
   detect-indent: 6.1.0
   graceful-fs: 4.2.8
+  jsonc-parser: 3.0.0
   parse-json: 5.2.0
   strip-bom: 4.0.0
-  strip-json-comments: 3.1.1
-  strip-json-trailing-commas: 1.1.0
   type-fest: 2.5.1
 
 devDependencies:
@@ -3020,6 +3018,10 @@ packages:
       minimist: 1.2.5
     dev: true
 
+  /jsonc-parser/3.0.0:
+    resolution: {integrity: sha512-fQzRfAbIBnR0IQvftw9FJveWiHp72Fg20giDrHz6TdfB12UH/uue0D3hm57UB5KgAVuniLMCaS8P1IMj9NR7cA==}
+    dev: false
+
   /kind-of/6.0.3:
     resolution: {integrity: sha512-dcS1ul+9tmeD95T+x28/ehLgd9mENa3LsvDTtzm3vyBEO7RPptvAD+t44WVXaUjTBRcrpFeFlC8WCruUR456hw==}
     engines: {node: '>=0.10.0'}
@@ -3832,11 +3834,7 @@ packages:
   /strip-json-comments/3.1.1:
     resolution: {integrity: sha512-6fPc+R4ihwqP6N/aIv2f1gMH8lOVtWQHoqC4yK6oSDVVocumAsfCqjkXnqiYMhmMwS/mEHLp7Vehlt3ql6lEig==}
     engines: {node: '>=8'}
-
-  /strip-json-trailing-commas/1.1.0:
-    resolution: {integrity: sha512-oFze7V4LBrJXx1liTYTXg2VRhHZAqlw/4izGIkrvz/DxJV/ocp1fVKIAexslbnHvEOjngmu396O6SDkgeIdt+w==}
-    engines: {node: '>=10.14.2'}
-    dev: false
+    dev: true
 
   /supports-color/5.5.0:
     resolution: {integrity: sha512-QjVjwdXIt408MIiAqCX4oUKsgU2EqAGzs2Ppkm4aQYbjm+ZEWEcW4SfFNTr4uMNZma0ey4f5lgLrkB0aX0QMow==}

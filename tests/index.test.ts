@@ -158,7 +158,7 @@ test("Don't throw error if option is provided on missing property in input", asy
     prepare({
         data: readmeExample,
         writeCallback(data) {
-            expect(JSON.parse(data)).toMatchInlineSnapshot(`
+            expect(data).toMatchInlineSnapshot(`
             Object {
               "author": "eldar",
               "bin": "build/bin.js",
@@ -175,7 +175,7 @@ test("Don't throw error if option is provided on missing property in input", asy
         `)
         },
     })
-    await modifyJsonFile(
+    await modifyJsonFile<any, 'skip'>(
         '',
         {
             bin: 'build/bin.js',
@@ -212,27 +212,7 @@ test('Modifies TSConfig (removes comments and trailing commas)', async () => {
         data: await readFile(join(__dirname, './tsconfig.fixture.json')),
         json: false,
         writeCallback(data) {
-            expect(JSON.parse(data)).toMatchInlineSnapshot(`
-Object {
-  "compilerOptions": Object {
-    "composite": true,
-    "module": "commonjs",
-    "noImplicitAny": true,
-    "outDir": "dist",
-    "preserveConstEnums": true,
-    "removeComments": true,
-    "sourceMap": true,
-  },
-  "files": Array [
-    "./src/foo.ts",
-  ],
-  "references": Array [
-    Object {
-      "path": "project",
-    },
-  ],
-}
-`)
+            expect(data).toMatchInlineSnapshot()
         },
     })
     await modifyTsConfigJsonFile(

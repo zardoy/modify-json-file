@@ -15,7 +15,6 @@ export type Options = Partial<{
      *  */
     throws: boolean
     // ideally this lib should integrate with json validator
-    // TODO paste {@linkcode Options.ifPropertyIsMissing} when the plugin is ready
     /**
      * This check is disabled when function is passed as argument
      * @default "throw" (silent if throws: false)
@@ -30,9 +29,9 @@ export type Options = Partial<{
     tabSize: null | number | 'preserve' | 'hard'
     /**
      * Allows to modify `jsonc` files (json with comments and trailing commas). These files are usually used by VSCode
-     * @default false
+     * @default `true` if path ends with .jsonc, otherwise `false`
      */
-    removeJsonc: boolean
+    jsonc: boolean
 }>
 
 type ModifyProperties<T extends Record<string, any>, CallbacksPassUndefined extends boolean> = {
@@ -43,7 +42,7 @@ type ModifyFunction<T> = (oldJson: T) => MaybePromise<T>
 
 // TODO remove duplicated definitions
 
-export type ModifyJsonFileFunction<T extends JsonRoot, DefaultName extends boolean = false, ActionSetter extends 'throw' | 'skip' | 'pass' = 'throw'> = (
+export type ModifyJsonFileFunction<T extends JsonRoot, DefaultName extends boolean = false> = <ActionSetter extends 'throw' | 'skip' | 'pass' = 'throw'>(
     path: DefaultName extends true ? string | { dir: string } : string,
     modifyProperties: T extends Record<string, any> ? ModifyProperties<T, ActionSetter extends 'pass' ? true : false> | ModifyFunction<T> : ModifyFunction<T>,
     options?: Options & {
@@ -93,10 +92,11 @@ export const modifyJsonFile: ModifyJsonFileGenericFunction = async (path, modify
         ifPropertyIsMissing = 'throw',
         ifPropertyIsMissingForSetter = 'throw',
         tabSize = 'preserve',
-        removeJsonc = false,
+        jsonc = path.endsWith('.jsonc'),
     } = options
     try {
-        let { json, indent } = await loadJsonFile(path, { encoding, tabSize, removeJsonc })
+        // TODO JSONC
+        let { json, indent } = await loadJsonFile(path, { encoding, tabSize })
         if (typeof modifyProperties === 'function') {
             // TODO why arg is never
             json = await (modifyProperties as any)(json)
