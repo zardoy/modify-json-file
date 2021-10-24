@@ -29,9 +29,14 @@ export type Options = Partial<{
     tabSize: null | number | 'preserve' | 'hard'
     /**
      * Allows to modify `jsonc` files (json with comments and trailing commas). These files are usually used by VSCode
-     * @default `true` if path ends with .jsonc, otherwise `false`
+     * @default  if path ends with .jsonc `true`, otherwise `false`
      */
     jsonc: boolean
+    /**
+     * Whether to silent errors and try to fix invalid JSON.
+     * @default false
+     */
+    errorTolerant: boolean
 }>
 
 type ModifyProperties<T extends Record<string, any>, CallbacksPassUndefined extends boolean> = {
@@ -93,10 +98,10 @@ export const modifyJsonFile: ModifyJsonFileGenericFunction = async (path, modify
         ifPropertyIsMissingForSetter = 'throw',
         tabSize = 'preserve',
         jsonc = path.endsWith('.jsonc'),
+        errorTolerant = false,
     } = options
     try {
-        // TODO JSONC
-        let { json, indent } = await loadJsonFile(path, { encoding, tabSize })
+        let { json, indent } = await loadJsonFile(path, { encoding, tabSize, jsonc, errorTolerant })
         if (typeof modifyProperties === 'function') {
             // TODO why arg is never
             json = await (modifyProperties as any)(json)
