@@ -98,7 +98,7 @@ export const modifyJsonFile: ModifyJsonFileGenericFunction = async (path, modify
         removeJsonc = false,
     } = options
     try {
-        let { json, indent } = await loadJsonFile(path, { encoding, tabSize, removeJsonc })
+        let { json, indent, hasFinalNewline } = await loadJsonFile(path, { encoding, tabSize, removeJsonc })
         if (typeof modifyProperties === 'function') {
             // TODO why arg is never
             json = await (modifyProperties as any)(json)
@@ -120,7 +120,10 @@ export const modifyJsonFile: ModifyJsonFileGenericFunction = async (path, modify
             }
         }
 
-        await fs.promises.writeFile(path, JSON.stringify(json, undefined, indent))
+        // TODO don't use this fix
+        let string = JSON.stringify(json, undefined, indent)
+        if (hasFinalNewline) string += '\n'
+        await fs.promises.writeFile(path, string)
     } catch (err) {
         if (throws) throw err
     }

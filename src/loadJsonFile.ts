@@ -19,5 +19,6 @@ export const loadJsonFile = async (filePath: string, { encoding, tabSize, remove
     return {
         json: parseJson(contents, filePath) as JsonRoot,
         indent: tabSize === 'preserve' ? detectIndent(contents).indent : tabSize === 'hard' ? '\t' : tabSize === null ? undefined : ' '.repeat(tabSize),
+        hasFinalNewline: contents.split('\n').slice(-1)[0]! === '',
     }
 }

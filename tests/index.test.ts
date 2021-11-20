@@ -190,6 +190,47 @@ test("Don't throw error if option is provided on missing property in input", asy
     )
 })
 
+test('Preserves empty newline', async () => {
+    expect.assertions(1)
+    prepare({
+        data: `
+{
+    "author": "eldar",
+    "bin": "src/bin.ts",
+    "dependencies": {
+        "fdir": ">=2",
+        "type-fest": "*"
+    }
+}
+`,
+        json: false,
+        writeCallback(data) {
+            expect(data).toMatchInlineSnapshot(`
+"{
+    \\"author\\": \\"eldar\\",
+    \\"bin\\": \\"build/bin.js\\",
+    \\"dependencies\\": {
+        \\"fdir\\": \\">=2\\",
+        \\"type-fest\\": \\"*\\"
+    },
+    \\"somethingWeird\\": \\"new-item\\"
+}
+"
+`)
+        },
+    })
+    await modifyJsonFile(
+        '',
+        {
+            bin: 'build/bin.js',
+            somethingWeird: () => 'new-item',
+        },
+        {
+            ifPropertyIsMissingForSetter: 'pass',
+        },
+    )
+})
+
 test('loader removes comments and trailing commas', async () => {
     const { json } = await loadJsonFile(join(__dirname, './tsconfig.fixture.json'), { encoding: 'utf-8', removeJsonc: true, tabSize: 'preserve' })
     expect(json).toMatchInlineSnapshot(`
